@@ -61,7 +61,7 @@ English | [中文](./README_cn.md)| [日本語](./README_ja.md) | [Contributing]
     - [x] [139yun](https://yun.139.com/) (Personal, Family)
     - [x] [YandexDisk](https://disk.yandex.com/)
     - [x] [BaiduNetdisk](http://pan.baidu.com/)
-    - [x] [Terabox](https://www.terabox.com/main)
+    - [x] [Terabox](https://dm.terabox.com/main)
     - [x] [UC](https://drive.uc.cn)
     - [x] [Quark](https://pan.quark.cn)
     - [x] [Thunder](https://pan.xunlei.com)

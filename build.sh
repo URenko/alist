@@ -65,19 +65,16 @@ BuildDev() {
     curl -L -o "${i}.tgz" "${url}"
     sudo tar xf "${i}.tgz" --strip-components 1 -C /usr/local
   done
-  OS_ARCHES=(linux-musl-amd64 linux-musl-arm64)
-  CGO_ARGS=(x86_64-linux-musl-gcc aarch64-linux-musl-gcc)
+  OS_ARCHES=(linux-amd64)
   for i in "${!OS_ARCHES[@]}"; do
     os_arch=${OS_ARCHES[$i]}
-    cgo_cc=${CGO_ARGS[$i]}
     echo building for ${os_arch}
     export GOOS=${os_arch%%-*}
-    export GOARCH=${os_arch##*-}
-    export CC=${cgo_cc}
+    export GOAMD64=v3
     export CGO_ENABLED=1
-    go build -o ./dist/$appName-$os_arch -ldflags="$muslflags" -tags=jsoniter .
+    go build -o ./dist/$appName-$os_arch -ldflags="$ldflags" -tags=jsoniter .
   done
-  xgo -targets=windows/amd64,darwin/amd64,darwin/arm64 -out "$appName" -ldflags="$ldflags" -tags=jsoniter .
+  xgo -targets=windows/amd64 -out "$appName" -ldflags="$ldflags" -tags=jsoniter .
   mv alist-* dist
   cd dist
   cp ./alist-windows-amd64.exe ./alist-windows-amd64-upx.exe
