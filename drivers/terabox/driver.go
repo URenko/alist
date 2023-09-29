@@ -11,6 +11,7 @@ import (
 	stdpath "path"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/alist-org/alist/v3/drivers/base"
 	"github.com/alist-org/alist/v3/pkg/utils"
@@ -71,7 +72,17 @@ func (d *Terabox) Link(ctx context.Context, file model.Obj, args model.LinkArgs)
 }
 
 func (d *Terabox) MakeDir(ctx context.Context, parentDir model.Obj, dirName string) error {
-	_, err := d.create(stdpath.Join(parentDir.GetPath(), dirName), 0, 1, "", "")
+	params := map[string]string{
+		"a": "commit",
+	}
+	data := map[string]string{
+		"path":       stdpath.Join(parentDir.GetPath(), dirName),
+		"isdir":      "1",
+		"block_list": "[]",
+	}
+	res, err := d.post_form("/api/create", params, data, nil)
+	log.Debugln(string(res))
+	time.Sleep(time.Duration(2) * time.Second)
 	return err
 }
 
@@ -157,23 +168,28 @@ func (d *Terabox) Put(ctx context.Context, dstDir model.Obj, stream model.FileSt
 	rawPath := stdpath.Join(dstDir.GetPath(), stream.GetName())
 	path := encodeURIComponent(rawPath)
 	block_list_str := fmt.Sprintf("[%s]", strings.Join(block_list, ","))
-	data := fmt.Sprintf("path=%s&size=%d&isdir=0&autoinit=1&block_list=%s",
-		path, stream.GetSize(),
-		block_list_str)
-	params := map[string]string{}
+	data := map[string]string{
+		"path":        rawPath,
+		"autoinit":    "1",
+		"target_path": dstDir.GetPath(),
+		"block_list":  block_list_str,
+		"local_mtime": strconv.FormatInt(time.Now().Unix(), 10),
+	}
 	var precreateResp PrecreateResp
-	_, err = d.post("/api/precreate", params, data, &precreateResp)
+	log.Debugln(data)
+	res, err := d.post_form("/api/precreate", nil, data, &precreateResp)
 	if err != nil {
 		return err
 	}
 	log.Debugf("%+v", precreateResp)
 	if precreateResp.Errno != 0 {
+		log.Debugln(string(res))
 		return fmt.Errorf("[terabox] failed to precreate file, errno: %d", precreateResp.Errno)
 	}
 	if precreateResp.ReturnType == 2 {
 		return nil
 	}
-	params = map[string]string{
+	params := map[string]string{
 		"method":     "upload",
 		"path":       path,
 		"uploadid":   precreateResp.Uploadid,
@@ -216,7 +232,21 @@ func (d *Terabox) Put(ctx context.Context, dstDir model.Obj, stream model.FileSt
 			up(float64(i) * 100 / float64(len(precreateResp.BlockList)))
 		}
 	}
-	_, err = d.create(rawPath, stream.GetSize(), 0, precreateResp.Uploadid, block_list_str)
+	params = map[string]string{
+		"isdir": "0",
+		"rtype": "1",
+	}
+	data = map[string]string{
+		"path":        rawPath,
+		"size":        strconv.FormatInt(stream.GetSize(), 10),
+		"uploadid":    precreateResp.Uploadid,
+		"target_path": dstDir.GetPath(),
+		"block_list":  block_list_str,
+		"local_mtime": strconv.FormatInt(time.Now().Unix(), 10),
+	}
+	res, err = d.post_form("/api/create", params, data, nil)
+	log.Debugln(string(res))
+	time.Sleep(time.Duration(len(precreateResp.BlockList)/16+5) * time.Second)
 	return err
 }
 
