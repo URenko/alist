@@ -105,6 +105,15 @@ func (d *Terabox) post(pathname string, params map[string]string, data interface
 	}, resp)
 }
 
+func (d *Terabox) post_form(pathname string, params map[string]string, data map[string]string, resp interface{}) ([]byte, error) {
+	return d.request("https://www.terabox.com"+pathname, http.MethodPost, func(req *resty.Request) {
+		if params != nil {
+			req.SetQueryParams(params)
+		}
+		req.SetFormData(data)
+	}, resp)
+}
+
 func (d *Terabox) getFiles(dir string) ([]File, error) {
 	page := 1
 	num := 100
@@ -235,15 +244,6 @@ func (d *Terabox) manage(opera string, filelist interface{}) ([]byte, error) {
 	}
 	data := fmt.Sprintf("async=0&filelist=%s&ondup=newcopy", encodeURIComponent(string(marshal)))
 	return d.post("/api/filemanager", params, data, nil)
-}
-
-func (d *Terabox) create(path string, size int64, isdir int, uploadid, block_list string) ([]byte, error) {
-	params := map[string]string{}
-	data := fmt.Sprintf("path=%s&size=%d&isdir=%d", encodeURIComponent(path), size, isdir)
-	if uploadid != "" {
-		data += fmt.Sprintf("&uploadid=%s&block_list=%s", uploadid, block_list)
-	}
-	return d.post("/api/create", params, data, nil)
 }
 
 func encodeURIComponent(str string) string {
