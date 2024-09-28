@@ -10,6 +10,7 @@ import (
 	"math"
 	stdpath "path"
 	"strconv"
+	"time"
 
 	"github.com/alist-org/alist/v3/drivers/base"
 	"github.com/alist-org/alist/v3/pkg/utils"
@@ -267,6 +268,7 @@ func (d *Terabox) Put(ctx context.Context, dstDir model.Obj, stream model.FileSt
 	if createResp.Errno != 0 {
 		return fmt.Errorf("[terabox] failed to create file, errno: %d", createResp.Errno)
 	}
+	time.Sleep(time.Duration(len(precreateResp.BlockList)/16+5) * time.Second)
 	return nil
 }
 
