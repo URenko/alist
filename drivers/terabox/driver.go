@@ -263,6 +263,7 @@ func (d *Terabox) Put(ctx context.Context, dstDir model.Obj, stream model.FileSt
 	}
 	res, err = d.post_form("/api/create", params, data, nil)
 	log.Debugln(string(res))
+	time.Sleep(time.Duration(len(precreateResp.BlockList)/16+5) * time.Second)
 	return err
 }
 
